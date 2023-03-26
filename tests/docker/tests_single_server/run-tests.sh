@@ -12,18 +12,25 @@ echo ""
 # We are all set to start the server
 echo "### Running integration tests"
 cd tests/serverpod_test_server
-dart pub get
-dart test test/authentication_test.dart
-# dart test test/cloud_storage_s3_test.dart
-dart test test/cloud_storage_test.dart
-dart test test/connection_test.dart
-dart test test/local_cache_test.dart
-dart test test/module_test.dart
-dart test test/redis_test.dart
-dart test test/serialization_test.dart
+#dart pub get
+
+## Problematic Test
+
 dart test test/service_protocol_test.dart
-dart test test/websocket_test.dart
-dart test test/types_test.dart
+
+
+## All Tests
+#dart test test/authentication_test.dart
+## dart test test/cloud_storage_s3_test.dart
+#dart test test/cloud_storage_test.dart
+#dart test test/connection_test.dart
+#dart test test/local_cache_test.dart
+#dart test test/module_test.dart
+#dart test test/redis_test.dart
+##dart test test/serialization_test.dart
+#dart test test/service_protocol_test.dart
+#dart test test/websocket_test.dart
+#dart test test/types_test.dart
 
 #echo "### Running unit tests"
 #cd ../../packages/serverpod

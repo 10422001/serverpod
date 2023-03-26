@@ -66,7 +66,6 @@ class _EndpointInsights extends _i1.EndpointRef {
           'filter': filter,
         },
       );
-
   /// Get the latest [numEntries] from the session log.
   _i2.Future<_i4.SessionLogResult> getOpenSessionLog(
     int? numEntries,

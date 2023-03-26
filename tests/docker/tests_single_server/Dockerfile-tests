@@ -1,3 +1,15 @@
+## Specify the Dart SDK base image version
+#FROM dart:2.19 AS build
+#
+## Set the working directory
+#WORKDIR /app
+#
+## Copy the whole serverpod repo into the container.
+#COPY . .
+#
+## Setup database tables and start the server.
+#CMD ["tests/docker/tests_single_server/run-tests.sh"]
+
 # Specify the Dart SDK base image version
 FROM dart:2.19 AS build
 
@@ -5,7 +17,37 @@ FROM dart:2.19 AS build
 WORKDIR /app
 
 # Copy the whole serverpod repo into the container.
+#COPY tests tests
+#COPY packages packages
+#COPY integrations integrations
+#COPY modules modules
+
+COPY examples/ examples/
+COPY integrations/ integrations/
+COPY misc/ misc/
+COPY modules/ modules/
+COPY packages/ packages/
+COPY templates/ templates/
+COPY tools/ tools/
+COPY util/ util/
+COPY tests/serverpod_test_server/pubspec.yaml tests/serverpod_test_server/
+
+#RUN cd tests/serverpod_test_server &&\
+#dart pub get
+
+
+COPY tests/ tests/
+
+
+# Install dependencies for test server.
+WORKDIR tests/serverpod_test_server
+RUN --mount=type=cache,target=$HOME/.pub-cache \
+    dart pub get
+
 COPY . .
 
+
+# Setup database tables and start the server.
+RUN echo 'pub get done'
 # Setup database tables and start the server.
 CMD ["tests/docker/tests_single_server/run-tests.sh"]

@@ -1,5 +1,7 @@
+import 'package:serverpod_service_client/src/protocol/session_log_result.dart'
+as _i4;
 import 'package:serverpod_service_client/serverpod_service_client.dart'
-    as service;
+as service;
 import 'package:serverpod_test_client/serverpod_test_client.dart';
 import 'package:test/test.dart';
 
@@ -268,6 +270,11 @@ void main() {
       await client.openStreamingConnection(
         disconnectOnLostInternetConnection: false,
       );
+      print(client.streamingConnectionStatus);
+      expect(
+        client.streamingConnectionStatus,
+        equals(StreamingConnectionStatus.connecting),
+      );
 
       for (var i = 0; i < 5; i += 1) {
         await client.streamingLogging.sendStreamMessage(SimpleData(num: 42));
@@ -279,9 +286,33 @@ void main() {
         await client.streamingLogging.sendStreamMessage(SimpleData(num: 42));
       }
 
-      await Future.delayed(const Duration(seconds: 1));
+      // This test failed some times due to some kind of race condition.
+      // Idealy we would not use a hard coded delay here.
+      // Ticket: https://github.com/serverpod/serverpod/issues/773
+      // _i4.SessionLogResult logResult;
+      for (var i = 0; i < 10; i += 1) {
+        print(client.streamingConnectionStatus);
+        if (client.streamingConnectionStatus !=
+            StreamingConnectionStatus.connected) {
+          // print(client.streamingConnectionStatus);
+          await Future.delayed(const Duration(milliseconds: 300));
+          // print('wait a moment');
+        } else {
+          break;
+        }
+      }
 
-      var logResult = await serviceClient.insights.getSessionLog(1, null);
+      _i4.SessionLogResult logResult = await serviceClient.insights
+          .getSessionLog(1, null);
+      for (var i = 0; i < 10; i += 1) {
+        if (logResult.sessionLog[0].logs.length != 12) {
+          await Future.delayed(Duration(milliseconds: 500));
+          logResult = await serviceClient.insights.getSessionLog(1, null);
+        }
+      }
+
+
+
       expect(logResult.sessionLog.length, equals(1));
       expect(logResult.sessionLog[0].sessionLogEntry.isOpen, equals(true));
       // We should have logged one entry when opening the stream and 11 when
@@ -301,7 +332,7 @@ void main() {
     group('target definition', () {
       test('sanity checks', () async {
         var definition =
-            await serviceClient.insights.getTargetDatabaseDefinition();
+        await serviceClient.insights.getTargetDatabaseDefinition();
 
         expect(definition.tables.map((e) => e.name),
             contains('object_field_scopes'));
@@ -320,7 +351,7 @@ void main() {
       });
       test('contains selected tables', () async {
         var definition =
-            await serviceClient.insights.getTargetDatabaseDefinition();
+        await serviceClient.insights.getTargetDatabaseDefinition();
 
         const expectedTables = [
           'object_field_scopes',
@@ -340,7 +371,7 @@ void main() {
       });
       test('columns only contains database fields', () async {
         var definition =
-            await serviceClient.insights.getTargetDatabaseDefinition();
+        await serviceClient.insights.getTargetDatabaseDefinition();
 
         var columns = definition.tables
             .firstWhere((table) => table.name == 'object_field_scopes')
@@ -353,7 +384,7 @@ void main() {
 
       test('foreign keys', () async {
         var definition =
-            await serviceClient.insights.getTargetDatabaseDefinition();
+        await serviceClient.insights.getTargetDatabaseDefinition();
 
         var table = definition.tables
             .firstWhere((table) => table.name == 'object_with_parent');
@@ -374,7 +405,7 @@ void main() {
 
       test('indexes', () async {
         var definition =
-            await serviceClient.insights.getTargetDatabaseDefinition();
+        await serviceClient.insights.getTargetDatabaseDefinition();
 
         var table = definition.tables
             .firstWhere((table) => table.name == 'object_with_index');
@@ -408,7 +439,7 @@ void main() {
 
       test('validate dart types', () async {
         var definition =
-            await serviceClient.insights.getTargetDatabaseDefinition();
+        await serviceClient.insights.getTargetDatabaseDefinition();
 
         var columns = definition.tables
             .firstWhere((table) => table.name == 'object_with_object')
@@ -505,7 +536,8 @@ extension on service.TableDefinition {
       for (var index in indexes) {
         // Converting to lower case, since Serverpod does not quote index names in the generated SQL.
         index.matchesDefinition(definition.indexes.firstWhere(
-            (e) => e.indexName.toLowerCase() == index.indexName.toLowerCase()));
+                (e) =>
+            e.indexName.toLowerCase() == index.indexName.toLowerCase()));
       }
     }
   }
